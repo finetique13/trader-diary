@@ -80,6 +80,15 @@
       background: linear-gradient(90deg, rgba(210, 153, 34, 0.08) 0%, var(--bg-strip) 8%);
     }
 
+    .day-strip.today {
+      animation: today-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes today-pulse {
+      0%, 100% { box-shadow: 0 0 0 1px rgba(255, 250, 240, 0.25); }
+      50% { box-shadow: 0 0 0 2px rgba(255, 250, 240, 0.5); }
+    }
+
     .week-summary-strip {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -91,6 +100,10 @@
 
     .week-summary-strip .day-header {
       background: rgba(88, 166, 255, 0.04);
+    }
+
+    .week-summary-strip .day-date {
+      font-weight: 700;
     }
 
     .day-header {
@@ -295,7 +308,7 @@
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 1rem 1.25rem;
+      padding: 0.6rem 1.25rem 1rem;
       min-width: 280px;
       width: 280px;
       height: 200px;
@@ -308,7 +321,7 @@
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      margin-bottom: 0.75rem;
+      margin-bottom: 0.5rem;
     }
 
     .dashboard-grid {
@@ -693,11 +706,12 @@
       const sortedWeekKeys = Object.keys(weeks).sort();
       for (const weekKey of sortedWeekKeys) {
         const daysInWeek = weeks[weekKey];
+        const daysInCurrentMonth = daysInWeek.filter(d => d.date.getMonth() === currentMonth && d.date.getFullYear() === currentYear);
         for (const { date, key, dayData } of daysInWeek) {
           const strip = createDayStrip(date, key, dayData, data);
           monthContainer.appendChild(strip);
         }
-        const weekSummary = createWeekSummaryStrip(daysInWeek, data);
+        const weekSummary = createWeekSummaryStrip(daysInCurrentMonth.length > 0 ? daysInCurrentMonth : daysInWeek, data);
         monthContainer.appendChild(weekSummary);
       }
       calendar.appendChild(monthContainer);
@@ -807,23 +821,28 @@
     function createDayStrip(date, key, dayData, allData) {
       const netProfit = dayData.netProfit !== undefined && dayData.netProfit !== '' 
         ? parseFloat(dayData.netProfit) : null;
+      const commission = parseFloat(dayData.commission) || 0;
+      const cashback = parseFloat(dayData.cashback) || commission * 0.35;
+      const effectiveResult = netProfit !== null ? netProfit - commission + cashback : null;
       const isFilled = dayData.netProfit !== undefined && dayData.netProfit !== '';
       let statusClass = 'empty';
-      if (isFilled) {
-        statusClass = netProfit > 0 ? 'profit' : 'loss';
+      if (isFilled && effectiveResult !== null) {
+        statusClass = effectiveResult > 0 ? 'profit' : 'loss';
       }
 
+      const today = new Date();
+      const isToday = date.getDate() === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
       const strip = document.createElement('div');
-      strip.className = `day-strip ${statusClass}`;
+      strip.className = `day-strip ${statusClass}${isToday ? ' today' : ''}`;
       strip.dataset.key = key;
 
       const dayName = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'][date.getDay()];
       let summaryText = '';
-      if (isFilled && netProfit !== null) {
-        const sign = netProfit >= 0 ? '+' : '';
-        summaryText = `${sign}${netProfit.toLocaleString('ru-RU', { minimumFractionDigits: 2 })}$`;
+      if (isFilled && effectiveResult !== null) {
+        const sign = effectiveResult >= 0 ? '+' : '';
+        summaryText = `${sign}${effectiveResult.toLocaleString('ru-RU', { minimumFractionDigits: 2 })}$`;
       } else {
-        summaryText = 'Не заполнено';
+        summaryText = 'Нет сделок';
       }
 
       strip.innerHTML = `
@@ -949,23 +968,29 @@
 
       function updateSummary(el) {
         const summary = el.querySelector('.day-summary');
-        const val = netProfitInput.value;
-        if (val !== '' && val !== undefined) {
-          const num = parseFloat(val) || 0;
-          const sign = num >= 0 ? '+' : '';
-          summary.textContent = `${sign}${num.toLocaleString('ru-RU', { minimumFractionDigits: 2 })}$`;
+        const np = parseFloat(netProfitInput.value) || 0;
+        const comm = parseFloat(commissionInput.value) || 0;
+        const cb = parseFloat(cashbackInput.value) || comm * 0.35;
+        const effectiveResult = np - comm + cb;
+        if (netProfitInput.value !== '' && netProfitInput.value !== undefined) {
+          const sign = effectiveResult >= 0 ? '+' : '';
+          summary.textContent = `${sign}${effectiveResult.toLocaleString('ru-RU', { minimumFractionDigits: 2 })}$`;
         } else {
-          summary.textContent = 'Не заполнено';
+          summary.textContent = 'Нет сделок';
         }
         const status = getStripStatus(el);
         summary.className = `day-summary ${status}`;
       }
 
       function getStripStatus(el) {
-        const np = el.querySelector('[data-field="netProfit"]').value;
-        if (np === '' || np === undefined) return 'empty';
-        const val = parseFloat(np);
-        return val > 0 ? 'profit' : 'loss';
+        const np = parseFloat(el.querySelector('[data-field="netProfit"]').value) || 0;
+        const comm = parseFloat(el.querySelector('[data-field="commission"]').value) || 0;
+        const cbInput = el.querySelector('[data-field="cashback"]');
+        const cb = parseFloat(cbInput?.value) || comm * 0.35;
+        const effectiveResult = np - comm + cb;
+        const npInput = el.querySelector('[data-field="netProfit"]');
+        if (npInput.value === '' || npInput.value === undefined) return 'empty';
+        return effectiveResult > 0 ? 'profit' : 'loss';
       }
 
       netProfitInput.addEventListener('input', () => {
@@ -994,10 +1019,13 @@
     function getStripStatus(strip) {
       const npInput = strip.querySelector('[data-field="netProfit"]');
       if (!npInput) return 'empty';
-      const np = npInput.value;
-      if (np === '' || np === undefined) return 'empty';
-      const val = parseFloat(np);
-      return val > 0 ? 'profit' : 'loss';
+      if (npInput.value === '' || npInput.value === undefined) return 'empty';
+      const np = parseFloat(npInput.value) || 0;
+      const comm = parseFloat(strip.querySelector('[data-field="commission"]')?.value) || 0;
+      const cbInput = strip.querySelector('[data-field="cashback"]');
+      const cb = parseFloat(cbInput?.value) || comm * 0.35;
+      const effectiveResult = np - comm + cb;
+      return effectiveResult > 0 ? 'profit' : 'loss';
     }
 
     function saveDay(key, values) {

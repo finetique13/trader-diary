@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Trader's Diary</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <!-- Apple-style system font stack -->
   <style>
     :root {
       --bg-dark: #0f1117;
@@ -26,7 +24,7 @@
     }
 
     body {
-      font-family: 'Outfit', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
       background: var(--bg-dark);
       color: var(--text);
       margin: 0;
@@ -121,15 +119,19 @@
     }
 
     .day-date {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-variant-numeric: tabular-nums;
       font-size: 0.9rem;
       font-weight: 500;
     }
 
     .day-summary {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-variant-numeric: tabular-nums;
       font-size: 0.8rem;
       color: var(--text-muted);
+      min-width: 90px;
+      text-align: right;
     }
 
     .day-summary.profit { color: var(--green); }
@@ -139,7 +141,7 @@
     .day-toggle {
       font-size: 1.2rem;
       color: var(--text-muted);
-      transition: transform 0.2s;
+      transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .day-strip.expanded .day-toggle {
@@ -147,13 +149,17 @@
     }
 
     .day-content {
-      display: none;
-      padding: 0 14px 16px;
-      border-top: 1px solid var(--border);
+      max-height: 0;
+      overflow: hidden;
+      padding: 0 14px;
+      border-top: 1px solid transparent;
+      transition: max-height 0.55s cubic-bezier(0.4, 0, 0.2, 1), padding 0.55s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.4s ease;
     }
 
     .day-strip.expanded .day-content {
-      display: block;
+      max-height: 600px;
+      padding: 12px 14px 16px;
+      border-top-color: var(--border);
     }
 
     .form-group {
@@ -188,7 +194,8 @@
       border: 1px solid var(--border);
       border-radius: 6px;
       color: var(--text);
-      font-family: 'JetBrains Mono', monospace;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-variant-numeric: tabular-nums;
       font-size: 0.9rem;
     }
 
@@ -202,9 +209,10 @@
     }
 
     .input-currency .currency-suffix {
-      padding: 8px 12px 8px 0;
+      padding: 8px 12px 8px 2px;
       color: var(--text-muted);
-      font-family: 'JetBrains Mono', monospace;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-variant-numeric: tabular-nums;
       font-size: 0.9rem;
     }
 
@@ -212,7 +220,7 @@
       flex: 1;
       border: none;
       border-radius: 0;
-      padding-right: 6px;
+      padding: 8px 2px 8px 12px;
     }
 
     .input-currency:focus-within {
@@ -238,7 +246,7 @@
     .form-group textarea {
       min-height: 80px;
       resize: vertical;
-      font-family: 'Outfit', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
     }
 
     .month-header {
@@ -345,7 +353,8 @@
     }
 
     .dashboard-item .value {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-variant-numeric: tabular-nums;
       font-size: 0.95rem;
       font-weight: 500;
     }
@@ -601,7 +610,10 @@
         const key = formatDateKey(d);
         const dayData = data[key] || {};
         const np = parseFloat(dayData.netProfit) || 0;
-        cumulative += np;
+        const comm = parseFloat(dayData.commission) || 0;
+        const cb = parseFloat(dayData.cashback) || comm * 0.35;
+        const effectiveResult = np - comm + cb;
+        cumulative += effectiveResult;
         values.push({ day: d.getDate(), profit: cumulative });
       }
 
@@ -613,7 +625,7 @@
       const maxP = values.length ? Math.max(0, ...profits, 1) : 1;
       const range = maxP - minP || 1;
 
-      const padding = { top: 12, right: 12, bottom: 24, left: 38 };
+      const padding = { top: 12, right: 12, bottom: 28, left: 42 };
       const w = 260, h = 140;
       const chartW = w - padding.left - padding.right;
       const chartH = h - padding.top - padding.bottom;
@@ -630,18 +642,16 @@
       }
       const lineColor = values.length && values[values.length - 1].profit >= 0 ? '#3fb950' : '#f85149';
 
-      const gridLines = [];
+      const gridLinesY = [];
       for (let i = 1; i <= 4; i++) {
         const y = padding.top + (chartH / 5) * i;
-        gridLines.push(`<line x1="${padding.left}" y1="${y}" x2="${w-padding.right}" y2="${y}" stroke="#2d3544" stroke-dasharray="2" opacity="0.5"/>`);
+        gridLinesY.push(`<line x1="${padding.left}" y1="${y}" x2="${w-padding.right}" y2="${y}" stroke="#2d3544" stroke-dasharray="2" opacity="0.5"/>`);
       }
-
-      const labelIndices = !values.length ? [] : values.length <= 7 ? values.map((_, i) => i) : 
-        [0, ...Array.from({length: 5}, (_, k) => Math.round((values.length - 1) * (k + 1) / 6)), values.length - 1].filter((v, i, a) => a.indexOf(v) === i);
-      const dateLabels = labelIndices.map(i => {
+      const gridLinesX = [];
+      for (let i = 0; i < values.length; i++) {
         const x = toX(i);
-        return `<text x="${x}" y="${h - 4}" font-size="9" fill="#8b949e" text-anchor="middle">${values[i].day}</text>`;
-      }).join('');
+        gridLinesX.push(`<line x1="${x}" y1="${padding.top}" x2="${x}" y2="${h - padding.bottom}" stroke="#2d3544" stroke-dasharray="2" opacity="0.25"/>`);
+      }
 
       const yLabels = range > 0 ? [
         `<text x="${padding.left - 4}" y="${padding.top + 3}" font-size="8" fill="#8b949e" text-anchor="end">${maxP.toFixed(0)}</text>`,
@@ -650,12 +660,16 @@
       ].join('') : '';
 
       const chartHtml = `
-        ${gridLines.join('')}
+        ${gridLinesY.join('')}
+        ${gridLinesX.join('')}
         <line x1="${padding.left}" y1="${zeroY}" x2="${w-padding.right}" y2="${zeroY}" stroke="#2d3544" stroke-width="1"/>
         ${areaPath ? `<path d="${areaPath}" fill="${lineColor}" opacity="0.15"/>` : ''}
         ${linePath ? `<path d="${linePath}" fill="none" stroke="${lineColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>` : ''}
+        ${values.map((v, i) => {
+          const x = toX(i), y = toY(v.profit);
+          return `<circle cx="${x}" cy="${y}" r="2" fill="${lineColor}" stroke="#0f1117" stroke-width="0.5"/>`;
+        }).join('')}
         ${yLabels}
-        ${dateLabels}
       `;
       svg.innerHTML = chartHtml;
       const modalSvg = document.getElementById('profitChartModal');
@@ -733,8 +747,9 @@
         commission += comm;
         cashback += cb;
       }
-      if (endDeposit === 0 && daysInWeek.length > 0) endDeposit = startDeposit + netProfit + cashback;
-      return { startDeposit, netProfit, commission, cashback, endDeposit };
+      const effectiveResult = netProfit - commission + cashback;
+      if (endDeposit === 0 && daysInWeek.length > 0) endDeposit = startDeposit + effectiveResult;
+      return { startDeposit, netProfit, commission, cashback, endDeposit, effectiveResult };
     }
 
     function createWeekSummaryStrip(daysInWeek, allData) {
@@ -743,13 +758,13 @@
       const weekKey = getWeekKey(firstDay.date);
 
       const totals = calcWeekTotals(daysInWeek);
-      const { startDeposit, netProfit, commission, cashback, endDeposit } = totals;
-      const percent = startDeposit !== 0 ? ((netProfit / startDeposit) * 100).toFixed(2) + '%' : '';
+      const { startDeposit, netProfit, commission, cashback, endDeposit, effectiveResult } = totals;
+      const percent = startDeposit !== 0 ? ((effectiveResult / startDeposit) * 100).toFixed(2) + '%' : '';
       const hasData = daysInWeek.some(d => (d.dayData.netProfit ?? '') !== '');
       let statusClass = 'empty';
-      if (hasData) statusClass = netProfit > 0 ? 'profit' : 'loss';
-      const sign = netProfit >= 0 ? '+' : '';
-      const summaryText = hasData ? `${sign}${netProfit.toLocaleString('ru-RU', { minimumFractionDigits: 2 })}$` : '—';
+      if (hasData) statusClass = effectiveResult > 0 ? 'profit' : 'loss';
+      const sign = effectiveResult >= 0 ? '+' : '';
+      const summaryText = hasData ? `${sign}${effectiveResult.toLocaleString('ru-RU', { minimumFractionDigits: 2 })}$` : '—';
 
       const strip = document.createElement('div');
       strip.className = `week-summary-strip day-strip ${statusClass}`;
@@ -1028,12 +1043,47 @@
       return effectiveResult > 0 ? 'profit' : 'loss';
     }
 
+    function updateWeekSummary(weekKey) {
+      const strip = document.querySelector(`.week-summary-strip[data-week-key="${weekKey}"]`);
+      if (!strip) return;
+      const monday = new Date(weekKey);
+      const daysInWeek = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+          daysInWeek.push({ date: d, key: formatDateKey(d), dayData: getData()[formatDateKey(d)] || {} });
+        }
+      }
+      if (daysInWeek.length === 0) return;
+      const totals = calcWeekTotals(daysInWeek);
+      const { startDeposit, netProfit, commission, cashback, endDeposit, effectiveResult } = totals;
+      const percent = startDeposit !== 0 ? ((effectiveResult / startDeposit) * 100).toFixed(2) + '%' : '';
+      const hasData = daysInWeek.some(d => (d.dayData.netProfit ?? '') !== '');
+      let statusClass = 'empty';
+      if (hasData) statusClass = effectiveResult > 0 ? 'profit' : 'loss';
+      const sign = effectiveResult >= 0 ? '+' : '';
+      const summaryText = hasData ? `${sign}${effectiveResult.toLocaleString('ru-RU', { minimumFractionDigits: 2 })}$` : '—';
+      strip.classList.remove('profit', 'loss', 'empty');
+      strip.classList.add(statusClass);
+      const headerSummary = strip.querySelector('.day-summary');
+      if (headerSummary) {
+        headerSummary.textContent = summaryText;
+        headerSummary.className = `day-summary ${statusClass}`;
+      }
+      const vals = [startDeposit.toFixed(2), (netProfit >= 0 ? '+' : '') + netProfit.toFixed(2), commission.toFixed(2), cashback.toFixed(2), endDeposit.toFixed(2), percent];
+      strip.querySelectorAll('.day-content input').forEach((inp, i) => { inp.value = vals[i] ?? inp.value; });
+    }
+
     function saveDay(key, values) {
       const data = getData();
       data[key] = { ...data[key], ...values };
       saveData(data);
       updateDashboard();
       updateProfitChart();
+
+      const weekKey = getWeekKey(new Date(key));
+      updateWeekSummary(weekKey);
 
       const nextKey = getNextDayKey(key);
       const nextStrip = document.querySelector(`.day-strip[data-key="${nextKey}"]`);

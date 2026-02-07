@@ -954,7 +954,7 @@
             <div class="form-group">
               <label>Депозит на начало дня</label>
               <div class="input-currency">
-                <input type="number" step="0.01" data-field="startDeposit" placeholder="Из прошлого дня" readonly>
+                <input type="number" step="0.01" data-field="startDeposit" placeholder="Из прошлого дня">
                 <span class="currency-suffix">$</span>
               </div>
             </div>
@@ -977,7 +977,7 @@
             <div class="form-group">
               <label>CashBack (35% от комиссии)</label>
               <div class="input-currency">
-                <input type="number" step="0.01" data-field="cashback" readonly>
+                <input type="number" step="0.01" data-field="cashback" placeholder="Авто или вручную">
                 <span class="currency-suffix">$</span>
               </div>
             </div>
@@ -986,13 +986,13 @@
             <div class="form-group">
               <label>Депозит на конец дня</label>
               <div class="input-currency">
-                <input type="number" step="0.01" data-field="endDeposit" readonly>
+                <input type="number" step="0.01" data-field="endDeposit" placeholder="Авто или вручную">
                 <span class="currency-suffix">$</span>
               </div>
             </div>
             <div class="form-group">
               <label>Процент</label>
-              <input type="text" data-field="percent" readonly placeholder="%">
+              <input type="text" data-field="percent" placeholder="Авто или вручную">
             </div>
           </div>
           <div class="form-group">
@@ -1020,7 +1020,6 @@
       }
 
       const startDepositInput = strip.querySelector('[data-field="startDeposit"]');
-      if (!hasPrevDayData && startDeposit === '') startDepositInput.removeAttribute('readonly');
       const netProfitInput = strip.querySelector('[data-field="netProfit"]');
       const commissionInput = strip.querySelector('[data-field="commission"]');
       const cashbackInput = strip.querySelector('[data-field="cashback"]');
@@ -1103,6 +1102,9 @@
       });
       startDepositInput.addEventListener('input', recalc);
       startDepositInput.addEventListener('blur', () => saveDay(key, getDayValues(strip)));
+      cashbackInput.addEventListener('blur', () => saveDay(key, getDayValues(strip)));
+      endDepositInput.addEventListener('blur', () => saveDay(key, getDayValues(strip)));
+      percentInput.addEventListener('blur', () => saveDay(key, getDayValues(strip)));
       commentInput.addEventListener('blur', () => {
         saveDay(key, getDayValues(strip));
       });

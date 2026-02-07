@@ -584,7 +584,7 @@
       document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
     })();
 
-    window.addEventListener('DOMContentLoaded', function() {
+    function initApp() {
       const toggle = document.getElementById('themeToggle');
       const saved = localStorage.getItem(THEME_KEY);
       const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -600,7 +600,31 @@
           localStorage.setItem(THEME_KEY, next);
         });
       }
-    });
+      
+      const now = new Date();
+      try {
+        dataCache = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      } catch (e) {
+        dataCache = {};
+      }
+      buildCalendar(now.getFullYear(), now.getMonth());
+      
+      document.getElementById('prevMonth').addEventListener('click', () => {
+        const d = new Date(currentYear, currentMonth - 1);
+        buildCalendar(d.getFullYear(), d.getMonth());
+      });
+
+      document.getElementById('nextMonth').addEventListener('click', () => {
+        const d = new Date(currentYear, currentMonth + 1);
+        buildCalendar(d.getFullYear(), d.getMonth());
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+      initApp();
+    }
 
     function getMonthName(month) {
       const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
@@ -1157,26 +1181,6 @@
       }
     }
 
-    const now = new Date();
-
-    (function init() {
-      try {
-        dataCache = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-      } catch (e) {
-        dataCache = {};
-      }
-      buildCalendar(now.getFullYear(), now.getMonth());
-    })();
-
-    document.getElementById('prevMonth').addEventListener('click', () => {
-      const d = new Date(currentYear, currentMonth - 1);
-      buildCalendar(d.getFullYear(), d.getMonth());
-    });
-
-    document.getElementById('nextMonth').addEventListener('click', () => {
-      const d = new Date(currentYear, currentMonth + 1);
-      buildCalendar(d.getFullYear(), d.getMonth());
-    });
   </script>
 </body>
 </html>

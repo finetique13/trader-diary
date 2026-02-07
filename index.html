@@ -7,16 +7,53 @@
   <!-- Apple-style system font stack -->
   <style>
     :root {
-      --bg-dark: #0f1117;
-      --bg-card: #161b24;
-      --bg-strip: #1c222d;
-      --border: #2d3544;
+      --bg-page: #fbfbfd;
+      --bg-card: #ffffff;
+      --bg-strip: #ffffff;
+      --bg-strip-hover: #f5f5f7;
+      --border: rgba(0, 0, 0, 0.08);
+      --border-strong: rgba(0, 0, 0, 0.12);
+      --text: #1d1d1f;
+      --text-muted: #6e6e73;
+      --green: #34c759;
+      --red: #ff3b30;
+      --yellow: #ff9500;
+      --accent: #0071e3;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+      --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    [data-theme="dark"] {
+      --bg-page: #0d1117;
+      --bg-card: #161b22;
+      --bg-strip: #161b22;
+      --bg-strip-hover: #1c2128;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-strong: rgba(255, 255, 255, 0.12);
       --text: #e6edf3;
       --text-muted: #8b949e;
       --green: #3fb950;
       --red: #f85149;
       --yellow: #d29922;
       --accent: #58a6ff;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    [data-theme="dark"] .day-strip.profit {
+      background: linear-gradient(90deg, rgba(63, 185, 80, 0.1) 0%, var(--bg-strip) 10%);
+    }
+
+    [data-theme="dark"] .day-strip.loss {
+      background: linear-gradient(90deg, rgba(248, 81, 73, 0.1) 0%, var(--bg-strip) 10%);
+    }
+
+    [data-theme="dark"] .day-strip.empty {
+      background: linear-gradient(90deg, rgba(210, 153, 34, 0.1) 0%, var(--bg-strip) 10%);
+    }
+
+    [data-theme="dark"] .week-summary-strip .day-header {
+      background: rgba(88, 166, 255, 0.06);
     }
 
     * {
@@ -25,19 +62,21 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
-      background: var(--bg-dark);
+      background: var(--bg-page);
       color: var(--text);
       margin: 0;
-      padding: 2rem;
+      padding: calc(2rem + env(safe-area-inset-top, 0px)) calc(2rem + env(safe-area-inset-right, 0px)) calc(2rem + env(safe-area-inset-bottom, 0px)) calc(2rem + env(safe-area-inset-left, 0px));
       min-height: 100vh;
+      font-weight: 400;
     }
 
     h1 {
-      font-weight: 600;
-      font-size: 1.75rem;
-      letter-spacing: -0.02em;
-      margin-bottom: 0.75rem;
+      font-weight: 700;
+      font-size: 2rem;
+      letter-spacing: -0.025em;
+      margin-bottom: 1rem;
       color: var(--text);
+      text-transform: uppercase;
     }
 
     .calendar-wrapper {
@@ -57,25 +96,30 @@
     .day-strip {
       background: var(--bg-strip);
       border: 1px solid var(--border);
-      border-radius: 6px;
-      margin-bottom: 6px;
+      border-radius: 12px;
+      margin-bottom: 8px;
       overflow: hidden;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .day-strip:hover {
+      box-shadow: var(--shadow-md);
     }
 
     .day-strip.profit {
       border-left: 4px solid var(--green);
-      background: linear-gradient(90deg, rgba(63, 185, 80, 0.08) 0%, var(--bg-strip) 8%);
+      background: linear-gradient(90deg, rgba(52, 199, 89, 0.06) 0%, var(--bg-strip) 10%);
     }
 
     .day-strip.loss {
       border-left: 4px solid var(--red);
-      background: linear-gradient(90deg, rgba(248, 81, 73, 0.08) 0%, var(--bg-strip) 8%);
+      background: linear-gradient(90deg, rgba(255, 59, 48, 0.06) 0%, var(--bg-strip) 10%);
     }
 
     .day-strip.empty {
       border-left: 4px solid var(--yellow);
-      background: linear-gradient(90deg, rgba(210, 153, 34, 0.08) 0%, var(--bg-strip) 8%);
+      background: linear-gradient(90deg, rgba(255, 149, 0, 0.06) 0%, var(--bg-strip) 10%);
     }
 
     .day-strip.today {
@@ -83,21 +127,22 @@
     }
 
     @keyframes today-pulse {
-      0%, 100% { box-shadow: 0 0 0 1px rgba(255, 250, 240, 0.25); }
-      50% { box-shadow: 0 0 0 2px rgba(255, 250, 240, 0.5); }
+      0%, 100% { box-shadow: var(--shadow-sm), 0 0 0 1px var(--accent); }
+      50% { box-shadow: var(--shadow-md), 0 0 0 2px var(--accent); }
     }
 
     .week-summary-strip {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 6px;
-      margin-bottom: 6px;
+      border-radius: 12px;
+      margin-bottom: 8px;
       overflow: hidden;
       border-left: 4px solid var(--accent);
+      box-shadow: var(--shadow-sm);
     }
 
     .week-summary-strip .day-header {
-      background: rgba(88, 166, 255, 0.04);
+      background: rgba(0, 113, 227, 0.04);
     }
 
     .week-summary-strip .day-date {
@@ -115,13 +160,13 @@
     }
 
     .day-header:hover {
-      background: rgba(255, 255, 255, 0.02);
+      background: var(--bg-strip-hover);
     }
 
     .day-date {
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
       font-variant-numeric: tabular-nums;
-      font-size: 0.9rem;
+      font-size: 1rem;
       font-weight: 500;
     }
 
@@ -151,14 +196,14 @@
     .day-content {
       max-height: 0;
       overflow: hidden;
-      padding: 0 14px;
+      padding: 0 16px;
       border-top: 1px solid transparent;
       transition: max-height 0.55s cubic-bezier(0.4, 0, 0.2, 1), padding 0.55s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.4s ease;
     }
 
     .day-strip.expanded .day-content {
       max-height: 600px;
-      padding: 12px 14px 16px;
+      padding: 16px 16px 20px;
       border-top-color: var(--border);
     }
 
@@ -179,32 +224,33 @@
 
     .form-group label {
       display: block;
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       color: var(--text-muted);
-      margin-bottom: 4px;
+      margin-bottom: 6px;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
+      font-weight: 500;
     }
 
     .form-group input,
     .form-group textarea {
       width: 100%;
-      padding: 8px 12px;
-      background: var(--bg-dark);
+      padding: 10px 14px;
+      background: var(--bg-page);
       border: 1px solid var(--border);
-      border-radius: 6px;
+      border-radius: 10px;
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
       font-variant-numeric: tabular-nums;
-      font-size: 0.9rem;
+      font-size: 1rem;
     }
 
     .input-currency {
       display: flex;
       align-items: center;
-      background: var(--bg-dark);
+      background: var(--bg-page);
       border: 1px solid var(--border);
-      border-radius: 6px;
+      border-radius: 10px;
       overflow: hidden;
     }
 
@@ -266,26 +312,27 @@
     }
 
     .month-nav-btn {
-      width: 36px;
-      height: 36px;
+      width: 40px;
+      height: 40px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: transparent;
+      background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 10px;
       color: var(--text-muted);
       font-size: 1.25rem;
       font-weight: 300;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       line-height: 1;
+      box-shadow: var(--shadow-sm);
     }
 
     .month-nav-btn:hover {
       border-color: var(--accent);
       color: var(--accent);
-      background: rgba(88, 166, 255, 0.06);
+      background: rgba(0, 113, 227, 0.06);
     }
 
     .month-nav-btn:active {
@@ -294,7 +341,8 @@
 
     .month-nav-title {
       font-weight: 600;
-      font-size: 1.05rem;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
       color: var(--text);
       text-align: left;
     }
@@ -308,20 +356,17 @@
       flex-wrap: wrap;
     }
 
-    .header-left {
-      flex-shrink: 0;
-    }
-
     .dashboard {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.6rem 1.25rem 1rem;
+      border-radius: 16px;
+      padding: 1rem 1.5rem 1.25rem;
       min-width: 280px;
       width: 280px;
       height: 200px;
       display: flex;
       flex-direction: column;
+      box-shadow: var(--shadow-sm);
     }
 
     .dashboard-title {
@@ -371,14 +416,15 @@
     .profit-chart {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1rem 1.25rem;
+      border-radius: 16px;
+      padding: 1rem 1.5rem;
       min-width: 280px;
       width: 280px;
       height: 200px;
       display: flex;
       flex-direction: column;
       position: relative;
+      box-shadow: var(--shadow-sm);
     }
 
     .profit-chart-title {
@@ -399,23 +445,24 @@
       position: absolute;
       top: 8px;
       right: 8px;
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       padding: 0;
       border: 1px solid var(--border);
-      border-radius: 6px;
-      background: var(--bg-dark);
+      border-radius: 10px;
+      background: var(--bg-page);
       color: var(--text-muted);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .chart-fullscreen-btn:hover {
       border-color: var(--accent);
       color: var(--accent);
+      background: rgba(0, 113, 227, 0.06);
     }
 
     .chart-fullscreen-btn svg {
@@ -428,12 +475,13 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.4);
       z-index: 1000;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      backdrop-filter: blur(2px);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
 
     .chart-modal-overlay.open {
@@ -447,11 +495,12 @@
       max-height: 800px;
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 20px;
       padding: 1.5rem;
       cursor: pointer;
       display: flex;
       flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
     }
 
     .chart-modal-content .profit-chart-title {
@@ -463,12 +512,93 @@
       width: 100%;
       min-height: 0;
     }
+
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .theme-switch {
+      position: relative;
+      width: 52px;
+      height: 30px;
+      background: var(--border);
+      border-radius: 15px;
+      cursor: pointer;
+      transition: background 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 6px;
+    }
+
+    .theme-switch:hover {
+      background: var(--border-strong);
+    }
+
+    .theme-switch .theme-icon {
+      width: 18px;
+      height: 18px;
+      opacity: 0.45;
+      flex-shrink: 0;
+      transition: opacity 0.2s;
+    }
+
+    .theme-switch .theme-icon svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .theme-switch .theme-icon-sun { order: 1; }
+    .theme-switch .theme-icon-moon { order: 2; }
+
+    .theme-switch::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 24px;
+      height: 24px;
+      background: var(--bg-card);
+      border-radius: 50%;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1;
+    }
+
+    .theme-switch.active::after {
+      transform: translateX(22px);
+    }
+
+    [data-theme="dark"] .theme-switch {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    [data-theme="dark"] .theme-switch.active {
+      background: var(--accent);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
   </style>
 </head>
 <body>
   <div class="header-row">
     <div class="header-left">
       <h1>Trader's Diary</h1>
+      <div class="theme-toggle">
+        <button type="button" class="theme-switch" id="themeToggle" title="Переключить тему" aria-label="Переключить тему">
+          <span class="theme-icon theme-icon-sun"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></span>
+          <span class="theme-icon theme-icon-moon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+        </button>
+      </div>
     </div>
     <div class="header-right">
       <div class="profit-chart">
@@ -479,7 +609,7 @@
         <svg id="profitChart" viewBox="0 0 260 140" preserveAspectRatio="none"></svg>
       </div>
       <div class="dashboard">
-      <div class="dashboard-title">Итоги за месяц</div>
+      <div class="dashboard-title">Итог за месяц</div>
       <div class="dashboard-grid">
         <div class="dashboard-item">
           <label>Депозит на начало</label>
@@ -507,6 +637,35 @@
         </div>
       </div>
     </div>
+      <div class="dashboard">
+      <div class="dashboard-title">Итог за год</div>
+      <div class="dashboard-grid">
+        <div class="dashboard-item">
+          <label>Депозит на начало</label>
+          <span class="value" id="dashYearStartDeposit">—</span>
+        </div>
+        <div class="dashboard-item">
+          <label>Чистая прибыль</label>
+          <span class="value" id="dashYearNetProfit">—</span>
+        </div>
+        <div class="dashboard-item">
+          <label>Комиссия</label>
+          <span class="value" id="dashYearCommission">—</span>
+        </div>
+        <div class="dashboard-item">
+          <label>CashBack</label>
+          <span class="value" id="dashYearCashback">—</span>
+        </div>
+        <div class="dashboard-item">
+          <label>Депозит на конец</label>
+          <span class="value" id="dashYearEndDeposit">—</span>
+        </div>
+        <div class="dashboard-item">
+          <label>Процент</label>
+          <span class="value" id="dashYearPercent">—</span>
+        </div>
+      </div>
+    </div>
     </div>
   </div>
 
@@ -528,6 +687,27 @@
 
   <script>
     const STORAGE_KEY = 'trader-diary-data';
+    const THEME_KEY = 'trader-diary-theme';
+
+    let dataCache = {};
+
+    (function initTheme() {
+      const saved = localStorage.getItem(THEME_KEY);
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const dark = saved !== null ? saved === 'dark' : prefersDark;
+      document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+      const toggle = document.getElementById('themeToggle');
+      if (toggle) toggle.classList.toggle('active', dark);
+    })();
+
+    document.getElementById('themeToggle').addEventListener('click', function() {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const next = isDark ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      this.classList.toggle('active', next === 'dark');
+      localStorage.setItem(THEME_KEY, next);
+      if (typeof updateProfitChart === 'function') updateProfitChart();
+    });
 
     function getMonthName(month) {
       const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
@@ -540,21 +720,37 @@
     }
 
     function getData() {
-      try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-      } catch {
-        return {};
-      }
+      return dataCache;
     }
 
     function saveData(data) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      dataCache = data || dataCache;
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(dataCache));
+      } catch (e) {}
     }
 
     function getPrevDayKey(date) {
       const prev = new Date(date);
       prev.setDate(prev.getDate() - 1);
       return formatDateKey(prev);
+    }
+
+    function getLastEndDepositBefore(allData, date) {
+      const d = new Date(date);
+      d.setDate(d.getDate() - 1);
+      const limit = 400;
+      for (let i = 0; i < limit; i++) {
+        const key = formatDateKey(d);
+        const day = allData[key] || {};
+        const ed = day.endDeposit;
+        if (ed !== undefined && ed !== '' && ed !== null) {
+          const val = parseFloat(ed);
+          if (!isNaN(val)) return ed;
+        }
+        d.setDate(d.getDate() - 1);
+      }
+      return null;
     }
 
     function getNextDayKey(key) {
@@ -575,6 +771,34 @@
     function calcMonthTotals(year, month) {
       const startDate = new Date(year, month, 1);
       const endDate = new Date(year, month + 1, 0);
+      const data = getData();
+      const firstKey = formatDateKey(startDate);
+      const lastKey = formatDateKey(endDate);
+
+      let startDeposit = 0, netProfit = 0, commission = 0, cashback = 0, endDeposit = 0;
+
+      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        const key = formatDateKey(d);
+        const dayData = data[key] || {};
+        const sd = parseFloat(dayData.startDeposit) || 0;
+        const np = parseFloat(dayData.netProfit) || 0;
+        const comm = parseFloat(dayData.commission) || 0;
+        const cb = parseFloat(dayData.cashback) || comm * 0.35;
+        const ed = parseFloat(dayData.endDeposit) || 0;
+        if (key === firstKey) startDeposit = sd;
+        if (key === lastKey) endDeposit = ed;
+        netProfit += np;
+        commission += comm;
+        cashback += cb;
+      }
+      if (endDeposit === 0) endDeposit = startDeposit + netProfit + cashback;
+      const percent = startDeposit !== 0 ? ((netProfit / startDeposit) * 100).toFixed(2) + '%' : '—';
+      return { startDeposit, netProfit, commission, cashback, endDeposit, percent };
+    }
+
+    function calcYearTotals(year) {
+      const startDate = new Date(year, 0, 1);
+      const endDate = new Date(year, 11, 31);
       const data = getData();
       const firstKey = formatDateKey(startDate);
       const lastKey = formatDateKey(endDate);
@@ -640,34 +864,38 @@
         zeroY = toY(0);
         areaPath = `${linePath} L ${pts[pts.length-1].x} ${zeroY} L ${pts[0].x} ${zeroY} Z`;
       }
-      const lineColor = values.length && values[values.length - 1].profit >= 0 ? '#3fb950' : '#f85149';
+      const style = getComputedStyle(document.documentElement);
+      const green = style.getPropertyValue('--green').trim() || '#34c759';
+      const red = style.getPropertyValue('--red').trim() || '#ff3b30';
+      const textMuted = style.getPropertyValue('--text-muted').trim() || '#6e6e73';
+      const lineColor = values.length && values[values.length - 1].profit >= 0 ? green : red;
 
       const gridLinesY = [];
       for (let i = 1; i <= 4; i++) {
         const y = padding.top + (chartH / 5) * i;
-        gridLinesY.push(`<line x1="${padding.left}" y1="${y}" x2="${w-padding.right}" y2="${y}" stroke="#2d3544" stroke-dasharray="2" opacity="0.5"/>`);
+        gridLinesY.push(`<line x1="${padding.left}" y1="${y}" x2="${w-padding.right}" y2="${y}" stroke="rgba(0,0,0,0.1)" stroke-dasharray="2" opacity="0.6"/>`);
       }
       const gridLinesX = [];
       for (let i = 0; i < values.length; i++) {
         const x = toX(i);
-        gridLinesX.push(`<line x1="${x}" y1="${padding.top}" x2="${x}" y2="${h - padding.bottom}" stroke="#2d3544" stroke-dasharray="2" opacity="0.25"/>`);
+        gridLinesX.push(`<line x1="${x}" y1="${padding.top}" x2="${x}" y2="${h - padding.bottom}" stroke="rgba(0,0,0,0.1)" stroke-dasharray="2" opacity="0.4"/>`);
       }
 
       const yLabels = range > 0 ? [
-        `<text x="${padding.left - 4}" y="${padding.top + 3}" font-size="8" fill="#8b949e" text-anchor="end">${maxP.toFixed(0)}</text>`,
-        `<text x="${padding.left - 4}" y="${zeroY + 3}" font-size="8" fill="#8b949e" text-anchor="end">0</text>`,
-        `<text x="${padding.left - 4}" y="${h - padding.bottom + 3}" font-size="8" fill="#8b949e" text-anchor="end">${minP.toFixed(0)}</text>`
+        `<text x="${padding.left - 4}" y="${padding.top + 3}" font-size="8" fill="${textMuted}" text-anchor="end">${maxP.toFixed(0)}</text>`,
+        `<text x="${padding.left - 4}" y="${h - padding.bottom + 3}" font-size="8" fill="${textMuted}" text-anchor="end">${minP.toFixed(0)}</text>`
       ].join('') : '';
 
       const chartHtml = `
         ${gridLinesY.join('')}
         ${gridLinesX.join('')}
-        <line x1="${padding.left}" y1="${zeroY}" x2="${w-padding.right}" y2="${zeroY}" stroke="#2d3544" stroke-width="1"/>
+        <line x1="${padding.left}" y1="${zeroY}" x2="${w-padding.right}" y2="${zeroY}" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>
         ${areaPath ? `<path d="${areaPath}" fill="${lineColor}" opacity="0.15"/>` : ''}
         ${linePath ? `<path d="${linePath}" fill="none" stroke="${lineColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>` : ''}
         ${values.map((v, i) => {
           const x = toX(i), y = toY(v.profit);
-          return `<circle cx="${x}" cy="${y}" r="2" fill="${lineColor}" stroke="#0f1117" stroke-width="0.5"/>`;
+          const strokeColor = document.documentElement.getAttribute('data-theme') === 'dark' ? '#161b22' : '#ffffff';
+          return `<circle cx="${x}" cy="${y}" r="2" fill="${lineColor}" stroke="${strokeColor}" stroke-width="1"/>`;
         }).join('')}
         ${yLabels}
       `;
@@ -678,9 +906,10 @@
 
     function updateDashboard() {
       const t = calcMonthTotals(currentYear, currentMonth);
+      const effectiveProfit = t.netProfit - t.commission + t.cashback;
       const fmt = (n) => n.toLocaleString('ru-RU', { minimumFractionDigits: 2 }) + ' $';
       document.getElementById('dashStartDeposit').textContent = t.startDeposit ? fmt(t.startDeposit) : '—';
-      document.getElementById('dashNetProfit').textContent = t.startDeposit || t.netProfit ? (t.netProfit >= 0 ? '+' : '') + fmt(t.netProfit) : '—';
+      document.getElementById('dashNetProfit').textContent = t.startDeposit || t.netProfit || t.commission || t.cashback ? (effectiveProfit >= 0 ? '+' : '') + fmt(effectiveProfit) : '—';
       document.getElementById('dashCommission').textContent = t.commission ? fmt(t.commission) : '—';
       document.getElementById('dashCashback').textContent = t.cashback ? fmt(t.cashback) : '—';
       document.getElementById('dashEndDeposit').textContent = t.endDeposit ? fmt(t.endDeposit) : '—';
@@ -688,8 +917,25 @@
 
       const npEl = document.getElementById('dashNetProfit');
       npEl.classList.remove('profit', 'loss');
-      if (t.netProfit > 0) npEl.classList.add('profit');
-      else if (t.netProfit < 0) npEl.classList.add('loss');
+      if (effectiveProfit > 0) npEl.classList.add('profit');
+      else if (effectiveProfit < 0) npEl.classList.add('loss');
+    }
+
+    function updateYearDashboard() {
+      const y = calcYearTotals(currentYear);
+      const effectiveProfit = y.netProfit - y.commission + y.cashback;
+      const fmt = (n) => n.toLocaleString('ru-RU', { minimumFractionDigits: 2 }) + ' $';
+      document.getElementById('dashYearStartDeposit').textContent = y.startDeposit ? fmt(y.startDeposit) : '—';
+      document.getElementById('dashYearNetProfit').textContent = y.startDeposit || y.netProfit || y.commission || y.cashback ? (effectiveProfit >= 0 ? '+' : '') + fmt(effectiveProfit) : '—';
+      document.getElementById('dashYearCommission').textContent = y.commission ? fmt(y.commission) : '—';
+      document.getElementById('dashYearCashback').textContent = y.cashback ? fmt(y.cashback) : '—';
+      document.getElementById('dashYearEndDeposit').textContent = y.endDeposit ? fmt(y.endDeposit) : '—';
+      document.getElementById('dashYearPercent').textContent = y.percent;
+
+      const npEl = document.getElementById('dashYearNetProfit');
+      npEl.classList.remove('profit', 'loss');
+      if (effectiveProfit > 0) npEl.classList.add('profit');
+      else if (effectiveProfit < 0) npEl.classList.add('loss');
     }
 
     function buildCalendar(year, month) {
@@ -701,6 +947,7 @@
 
       document.getElementById('monthTitle').textContent = `${getMonthName(month)} ${year}`;
       updateDashboard();
+      updateYearDashboard();
       updateProfitChart();
 
       const calendar = document.getElementById('calendar');
@@ -928,12 +1175,16 @@
       const prevKey = getPrevDayKey(date);
       const prevData = allData[prevKey] || {};
       const hasPrevDayData = prevData.endDeposit !== undefined && prevData.endDeposit !== '';
-      const startDeposit = hasPrevDayData
-        ? prevData.endDeposit
-        : (dayData.startDeposit !== undefined ? dayData.startDeposit : '');
+      let startDeposit = '';
+      if (hasPrevDayData) {
+        startDeposit = prevData.endDeposit;
+      } else {
+        const lastEnd = getLastEndDepositBefore(allData, date);
+        startDeposit = lastEnd ?? (dayData.startDeposit !== undefined ? dayData.startDeposit : '');
+      }
 
       const startDepositInput = strip.querySelector('[data-field="startDeposit"]');
-      if (!hasPrevDayData) startDepositInput.removeAttribute('readonly');
+      if (!hasPrevDayData && startDeposit === '') startDepositInput.removeAttribute('readonly');
       const netProfitInput = strip.querySelector('[data-field="netProfit"]');
       const commissionInput = strip.querySelector('[data-field="commission"]');
       const cashbackInput = strip.querySelector('[data-field="cashback"]');
@@ -1080,6 +1331,7 @@
       data[key] = { ...data[key], ...values };
       saveData(data);
       updateDashboard();
+      updateYearDashboard();
       updateProfitChart();
 
       const weekKey = getWeekKey(new Date(key));
@@ -1095,7 +1347,15 @@
     }
 
     const now = new Date();
-    buildCalendar(now.getFullYear(), now.getMonth());
+
+    (function init() {
+      try {
+        dataCache = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      } catch (e) {
+        dataCache = {};
+      }
+      buildCalendar(now.getFullYear(), now.getMonth());
+    })();
 
     document.getElementById('prevMonth').addEventListener('click', () => {
       const d = new Date(currentYear, currentMonth - 1);

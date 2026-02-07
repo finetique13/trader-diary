@@ -413,106 +413,6 @@
       flex-wrap: wrap;
     }
 
-    .profit-chart {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 1rem 1.5rem;
-      min-width: 280px;
-      width: 280px;
-      height: 200px;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .profit-chart-title {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.75rem;
-    }
-
-    .profit-chart svg {
-      flex: 1;
-      width: 100%;
-      min-height: 0;
-    }
-
-    .chart-fullscreen-btn {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      width: 32px;
-      height: 32px;
-      padding: 0;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: var(--bg-page);
-      color: var(--text-muted);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .chart-fullscreen-btn:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-      background: rgba(0, 113, 227, 0.06);
-    }
-
-    .chart-fullscreen-btn svg {
-      width: 14px;
-      height: 14px;
-      flex: none;
-    }
-
-    .chart-modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.4);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-
-    .chart-modal-overlay.open {
-      display: flex;
-    }
-
-    .chart-modal-content {
-      width: 75vw;
-      height: 75vh;
-      max-width: 1200px;
-      max-height: 800px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 1.5rem;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-    }
-
-    .chart-modal-content .profit-chart-title {
-      margin-bottom: 1rem;
-    }
-
-    .chart-modal-content svg {
-      flex: 1;
-      width: 100%;
-      min-height: 0;
-    }
-
     .theme-toggle {
       display: flex;
       align-items: center;
@@ -601,13 +501,6 @@
       </div>
     </div>
     <div class="header-right">
-      <div class="profit-chart">
-        <button class="chart-fullscreen-btn" id="chartFullscreenBtn" title="На весь экран" aria-label="На весь экран">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-        </button>
-        <div class="profit-chart-title">График прибыли</div>
-        <svg id="profitChart" viewBox="0 0 260 140" preserveAspectRatio="none"></svg>
-      </div>
       <div class="dashboard">
       <div class="dashboard-title">Итог за месяц</div>
       <div class="dashboard-grid">
@@ -669,13 +562,6 @@
     </div>
   </div>
 
-  <div class="chart-modal-overlay" id="chartModal">
-    <div class="chart-modal-content" id="chartModalContent">
-      <div class="profit-chart-title">График прибыли</div>
-      <svg id="profitChartModal" viewBox="0 0 260 140" preserveAspectRatio="xMidYMid meet"></svg>
-    </div>
-  </div>
-
   <div class="calendar-wrapper">
     <div class="month-nav">
       <button class="month-nav-btn" id="prevMonth" title="Предыдущий месяц" aria-label="Предыдущий месяц">‹</button>
@@ -712,7 +598,6 @@
           document.documentElement.setAttribute('data-theme', next);
           this.classList.toggle('active', next === 'dark');
           localStorage.setItem(THEME_KEY, next);
-          if (typeof updateProfitChart === 'function') updateProfitChart();
         });
       }
     });
@@ -832,86 +717,6 @@
       return { startDeposit, netProfit, commission, cashback, endDeposit, percent };
     }
 
-    function updateProfitChart() {
-      const startDate = new Date(currentYear, currentMonth, 1);
-      const endDate = new Date(currentYear, currentMonth + 1, 0);
-      const data = getData();
-      const values = [];
-      let cumulative = 0;
-      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-        const key = formatDateKey(d);
-        const dayData = data[key] || {};
-        const np = parseFloat(dayData.netProfit) || 0;
-        const comm = parseFloat(dayData.commission) || 0;
-        const cb = parseFloat(dayData.cashback) || comm * 0.35;
-        const effectiveResult = np - comm + cb;
-        cumulative += effectiveResult;
-        values.push({ day: d.getDate(), profit: cumulative });
-      }
-
-      const svg = document.getElementById('profitChart');
-      if (!svg) return;
-
-      const profits = values.map(v => v.profit);
-      const minP = values.length ? Math.min(0, ...profits) : 0;
-      const maxP = values.length ? Math.max(0, ...profits, 1) : 1;
-      const range = maxP - minP || 1;
-
-      const padding = { top: 12, right: 12, bottom: 28, left: 42 };
-      const w = 260, h = 140;
-      const chartW = w - padding.left - padding.right;
-      const chartH = h - padding.top - padding.bottom;
-
-      const toX = (i) => padding.left + (values.length > 1 ? (i / (values.length - 1)) * chartW : 0);
-      const toY = (p) => padding.top + chartH - ((p - minP) / range) * chartH;
-
-      let linePath = '', areaPath = '', zeroY = padding.top + chartH / 2;
-      if (values.length) {
-        const pts = values.map((v, i) => ({ x: toX(i), y: toY(v.profit) }));
-        linePath = pts.map((p, i) => (i ? `L ${p.x} ${p.y}` : `M ${p.x} ${p.y}`)).join(' ');
-        zeroY = toY(0);
-        areaPath = `${linePath} L ${pts[pts.length-1].x} ${zeroY} L ${pts[0].x} ${zeroY} Z`;
-      }
-      const style = getComputedStyle(document.documentElement);
-      const green = style.getPropertyValue('--green').trim() || '#34c759';
-      const red = style.getPropertyValue('--red').trim() || '#ff3b30';
-      const textMuted = style.getPropertyValue('--text-muted').trim() || '#6e6e73';
-      const lineColor = values.length && values[values.length - 1].profit >= 0 ? green : red;
-
-      const gridLinesY = [];
-      for (let i = 1; i <= 4; i++) {
-        const y = padding.top + (chartH / 5) * i;
-        gridLinesY.push(`<line x1="${padding.left}" y1="${y}" x2="${w-padding.right}" y2="${y}" stroke="rgba(0,0,0,0.1)" stroke-dasharray="2" opacity="0.6"/>`);
-      }
-      const gridLinesX = [];
-      for (let i = 0; i < values.length; i++) {
-        const x = toX(i);
-        gridLinesX.push(`<line x1="${x}" y1="${padding.top}" x2="${x}" y2="${h - padding.bottom}" stroke="rgba(0,0,0,0.1)" stroke-dasharray="2" opacity="0.4"/>`);
-      }
-
-      const yLabels = range > 0 ? [
-        `<text x="${padding.left - 4}" y="${padding.top + 3}" font-size="8" fill="${textMuted}" text-anchor="end">${maxP.toFixed(0)}</text>`,
-        `<text x="${padding.left - 4}" y="${h - padding.bottom + 3}" font-size="8" fill="${textMuted}" text-anchor="end">${minP.toFixed(0)}</text>`
-      ].join('') : '';
-
-      const chartHtml = `
-        ${gridLinesY.join('')}
-        ${gridLinesX.join('')}
-        <line x1="${padding.left}" y1="${zeroY}" x2="${w-padding.right}" y2="${zeroY}" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>
-        ${areaPath ? `<path d="${areaPath}" fill="${lineColor}" opacity="0.15"/>` : ''}
-        ${linePath ? `<path d="${linePath}" fill="none" stroke="${lineColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>` : ''}
-        ${values.map((v, i) => {
-          const x = toX(i), y = toY(v.profit);
-          const strokeColor = document.documentElement.getAttribute('data-theme') === 'dark' ? '#161b22' : '#ffffff';
-          return `<circle cx="${x}" cy="${y}" r="2" fill="${lineColor}" stroke="${strokeColor}" stroke-width="1"/>`;
-        }).join('')}
-        ${yLabels}
-      `;
-      svg.innerHTML = chartHtml;
-      const modalSvg = document.getElementById('profitChartModal');
-      if (modalSvg) modalSvg.innerHTML = chartHtml;
-    }
-
     function updateDashboard() {
       const t = calcMonthTotals(currentYear, currentMonth);
       const effectiveProfit = t.netProfit - t.commission + t.cashback;
@@ -956,7 +761,6 @@
       document.getElementById('monthTitle').textContent = `${getMonthName(month)} ${year}`;
       updateDashboard();
       updateYearDashboard();
-      updateProfitChart();
 
       const calendar = document.getElementById('calendar');
       calendar.innerHTML = '';
@@ -1340,7 +1144,6 @@
       saveData(data);
       updateDashboard();
       updateYearDashboard();
-      updateProfitChart();
 
       const weekKey = getWeekKey(new Date(key));
       updateWeekSummary(weekKey);
@@ -1373,15 +1176,6 @@
     document.getElementById('nextMonth').addEventListener('click', () => {
       const d = new Date(currentYear, currentMonth + 1);
       buildCalendar(d.getFullYear(), d.getMonth());
-    });
-
-    document.getElementById('chartFullscreenBtn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      document.getElementById('chartModal').classList.add('open');
-    });
-
-    document.getElementById('chartModal').addEventListener('click', () => {
-      document.getElementById('chartModal').classList.remove('open');
     });
   </script>
 </body>

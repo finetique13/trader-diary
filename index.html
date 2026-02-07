@@ -693,20 +693,28 @@
 
     (function initTheme() {
       const saved = localStorage.getItem(THEME_KEY);
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
       const dark = saved !== null ? saved === 'dark' : prefersDark;
       document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-      const toggle = document.getElementById('themeToggle');
-      if (toggle) toggle.classList.toggle('active', dark);
     })();
 
-    document.getElementById('themeToggle').addEventListener('click', function() {
-      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-      const next = isDark ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      this.classList.toggle('active', next === 'dark');
-      localStorage.setItem(THEME_KEY, next);
-      if (typeof updateProfitChart === 'function') updateProfitChart();
+    window.addEventListener('DOMContentLoaded', function() {
+      const toggle = document.getElementById('themeToggle');
+      const saved = localStorage.getItem(THEME_KEY);
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const dark = saved !== null ? saved === 'dark' : prefersDark;
+      if (toggle) toggle.classList.toggle('active', dark);
+
+      if (toggle) {
+        toggle.addEventListener('click', function() {
+          const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+          const next = isDark ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          this.classList.toggle('active', next === 'dark');
+          localStorage.setItem(THEME_KEY, next);
+          if (typeof updateProfitChart === 'function') updateProfitChart();
+        });
+      }
     });
 
     function getMonthName(month) {

@@ -1065,14 +1065,18 @@
         const endDeposit = start + netProfit + cashback;
         const percent = start !== 0 ? ((netProfit / start) * 100).toFixed(2) + '%' : '';
 
-        cashbackInput.value = cashback.toFixed(2);
-        endDepositInput.value = endDeposit.toFixed(2);
-        percentInput.value = percent;
+        // Не перезаписываем поле, которое сейчас редактируется
+        if (document.activeElement !== cashbackInput) {
+          cashbackInput.value = cashback.toFixed(2);
+        }
+        if (document.activeElement !== endDepositInput) {
+          endDepositInput.value = endDeposit.toFixed(2);
+        }
+        if (document.activeElement !== percentInput) {
+          percentInput.value = percent;
+        }
 
         const vals = getDayValues(strip);
-        vals.cashback = cashbackInput.value;
-        vals.endDeposit = endDepositInput.value;
-        vals.percent = percent;
         saveDay(key, vals);
         updateStripStyle(strip, key);
         updateSummary(strip);
@@ -1105,20 +1109,18 @@
         return effectiveResult > 0 ? 'profit' : 'loss';
       }
 
-      netProfitInput.addEventListener('input', () => {
-        recalc();
-      });
-      commissionInput.addEventListener('input', () => {
-        recalc();
-      });
+      netProfitInput.addEventListener('input', recalc);
+      commissionInput.addEventListener('input', recalc);
       startDepositInput.addEventListener('input', recalc);
+      cashbackInput.addEventListener('input', recalc);
+      endDepositInput.addEventListener('input', recalc);
+      percentInput.addEventListener('input', () => saveDay(key, getDayValues(strip)));
+      
       startDepositInput.addEventListener('blur', () => saveDay(key, getDayValues(strip)));
       cashbackInput.addEventListener('blur', () => saveDay(key, getDayValues(strip)));
       endDepositInput.addEventListener('blur', () => saveDay(key, getDayValues(strip)));
       percentInput.addEventListener('blur', () => saveDay(key, getDayValues(strip)));
-      commentInput.addEventListener('blur', () => {
-        saveDay(key, getDayValues(strip));
-      });
+      commentInput.addEventListener('blur', () => saveDay(key, getDayValues(strip)));
 
       recalc();
 

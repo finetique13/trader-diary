@@ -1,0 +1,9 @@
+{
+  "name": "trader-diary",
+  "version": "1.0.0",
+  "description": "Дневник трейдера",
+  "scripts": {
+    "start": "python3 -m http.server 3000",
+    "dev": "python3 -m http.server 3000"
+  }
+}

@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trader's Diary</title>
+  <!-- Apple-style system font stack -->
+  <style>
+    :root {
+      --bg-dark: #0f1117;
+      --bg-card: #161b24;
+      --bg-strip: #1c222d;
+      --border: #2d3544;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --green: #3fb950;
+      --red: #f85149;
+      --yellow: #d29922;
+      --accent: #58a6ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
+      margin: 0;
+      padding: 2rem;
+      min-height: 100vh;
+    }
+
+    h1 {
+      font-weight: 600;
+      font-size: 1.75rem;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+      color: var(--text);
+    }
+
+    .calendar-wrapper {
+      max-width: min(1400px, 95vw);
+      margin: -0.5rem auto 0;
+      width: 100%;
+    }
+
+    .calendar-wrapper .month-nav {
+      margin-bottom: 0.75rem;
+    }
+
+    .calendar {
+      width: 100%;
+    }
+
+    .day-strip {
+      background: var(--bg-strip);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 6px;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .day-strip.profit {
+      border-left: 4px solid var(--green);
+      background: linear-gradient(90deg, rgba(63, 185, 80, 0.08) 0%, var(--bg-strip) 8%);
+    }
+
+    .day-strip.loss {
+      border-left: 4px solid var(--red);
+      background: linear-gradient(90deg, rgba(248, 81, 73, 0.08) 0%, var(--bg-strip) 8%);
+    }
+
+    .day-strip.empty {
+      border-left: 4px solid var(--yellow);
+      background: linear-gradient(90deg, rgba(210, 153, 34, 0.08) 0%, var(--bg-strip) 8%);
+    }
+
+    .day-strip.today {
+      animation: today-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes today-pulse {
+      0%, 100% { box-shadow: 0 0 0 1px rgba(255, 250, 240, 0.25); }
+      50% { box-shadow: 0 0 0 2px rgba(255, 250, 240, 0.5); }
+    }
+
+    .week-summary-strip {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 6px;
+      overflow: hidden;
+      border-left: 4px solid var(--accent);
+    }
+
+    .week-summary-strip .day-header {
+      background: rgba(88, 166, 255, 0.04);
+    }
+
+    .week-summary-strip .day-date {
+      font-weight: 700;
+    }
+
+    .day-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      cursor: pointer;
+      min-height: 44px;
+      user-select: none;
+    }
+
+    .day-header:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .day-date {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-variant-numeric: tabular-nums;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .day-summary {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-variant-numeric: tabular-nums;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      min-width: 90px;
+      text-align: right;
+    }
+
+    .day-summary.profit { color: var(--green); }
+    .day-summary.loss { color: var(--red); }
+    .day-summary.empty { color: var(--yellow); }
+
+    .day-toggle {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .day-strip.expanded .day-toggle {
+      transform: rotate(180deg);
+    }
+
+    .day-content {
+      max-height: 0;
+      overflow: hidden;
+      padding: 0 14px;
+      border-top: 1px solid transparent;
+      transition: max-height 0.55s cubic-bezier(0.4, 0, 0.2, 1), padding 0.55s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.4s ease;
+    }
+
+    .day-strip.expanded .day-content {
+      max-height: 600px;
+      padding: 12px 14px 16px;
+      border-top-color: var(--border);
+    }
+
+    .form-group {
+      margin-top: 12px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 12px;
+    }
+
+    .form-row .form-group {
+      margin-top: 0;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px 12px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-variant-numeric: tabular-nums;
+      font-size: 0.9rem;
+    }
+
+    .input-currency {
+      display: flex;
+      align-items: center;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .input-currency .currency-suffix {
+      padding: 8px 12px 8px 2px;
+      color: var(--text-muted);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-variant-numeric: tabular-nums;
+      font-size: 0.9rem;
+    }
+
+    .input-currency input {
+      flex: 1;
+      border: none;
+      border-radius: 0;
+      padding: 8px 2px 8px 12px;
+    }
+
+    .input-currency:focus-within {
+      border-color: var(--accent);
+      outline: none;
+    }
+
+    .input-currency:focus-within .currency-suffix {
+      color: var(--accent);
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .form-group input:read-only {
+      opacity: 0.85;
+      cursor: default;
+    }
+
+    .form-group textarea {
+      min-height: 80px;
+      resize: vertical;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+
+    .month-header {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0 0 0.75rem;
+      color: var(--text-muted);
+      padding-left: 2px;
+    }
+
+    .month-nav {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      margin-bottom: 1.5rem;
+      gap: 0.5rem;
+    }
+
+    .month-nav-btn {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-size: 1.25rem;
+      font-weight: 300;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      line-height: 1;
+    }
+
+    .month-nav-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(88, 166, 255, 0.06);
+    }
+
+    .month-nav-btn:active {
+      transform: scale(0.95);
+    }
+
+    .month-nav-title {
+      font-weight: 600;
+      font-size: 1.05rem;
+      color: var(--text);
+      text-align: left;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 2rem;
+      margin-bottom: 0;
+      flex-wrap: wrap;
+    }
+
+    .header-left {
+      flex-shrink: 0;
+    }
+
+    .dashboard {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.6rem 1.25rem 1rem;
+      min-width: 280px;
+      width: 280px;
+      height: 200px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .dashboard-title {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem 1.5rem;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .dashboard-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .dashboard-item label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .dashboard-item .value {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-variant-numeric: tabular-nums;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .dashboard-item .value.profit { color: var(--green); }
+    .dashboard-item .value.loss { color: var(--red); }
+
+    .header-right {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .profit-chart {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      min-width: 280px;
+      width: 280px;
+      height: 200px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .profit-chart-title {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+    }
+
+    .profit-chart svg {
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+    }
+
+    .chart-fullscreen-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg-dark);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .chart-fullscreen-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .chart-fullscreen-btn svg {
+      width: 14px;
+      height: 14px;
+      flex: none;
+    }
+
+    .chart-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(2px);
+    }
+
+    .chart-modal-overlay.open {
+      display: flex;
+    }
+
+    .chart-modal-content {
+      width: 75vw;
+      height: 75vh;
+      max-width: 1200px;
+      max-height: 800px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-modal-content .profit-chart-title {
+      margin-bottom: 1rem;
+    }
+
+    .chart-modal-content svg {
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="header-row">
+    <div class="header-left">
+      <h1>Trader's Diary</h1>
+    </div>
+    <div class="header-right">
+      <div class="profit-chart">
+        <button class="chart-fullscreen-btn" id="chartFullscreenBtn" title="На весь экран" aria-label="На весь экран">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+        </button>
+        <div class="profit-chart-title">График прибыли</div>
+        <svg id="profitChart" viewBox="0 0 260 140" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="dashboard">
+      <div class="dashboard-title">Итоги за месяц</div>
+      <div class="dashboard-grid">
+        <div class="dashboard-item">
+          <label>Депозит на начало</label>
+          <span class="value" id="dashStartDeposit">—</span>
+        </div>
+        <div class="dashboard-item">
+          <label>Чистая прибыль</label>
+          <span class="value" id="dashNetProfit">—</span>
+        </div>
+        <div class="dashboard-item">
+          <label>Комиссия</label>
+          <span class="value" id="dashCommission">—</span>
+        </div>
+        <div class="dashboard-item">
+          <label>CashBack</label>
+          <span class="value" id="dashCashback">—</span>
+        </div>
+        <div class="dashboard-item">
+          <label>Депозит на конец</label>
+          <span class="value" id="dashEndDeposit">—</span>
+        </div>
+        <div class="dashboard-item">
+          <label>Процент</label>
+          <span class="value" id="dashPercent">—</span>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <div class="chart-modal-overlay" id="chartModal">
+    <div class="chart-modal-content" id="chartModalContent">
+      <div class="profit-chart-title">График прибыли</div>
+      <svg id="profitChartModal" viewBox="0 0 260 140" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+  </div>
+
+  <div class="calendar-wrapper">
+    <div class="month-nav">
+      <button class="month-nav-btn" id="prevMonth" title="Предыдущий месяц" aria-label="Предыдущий месяц">‹</button>
+      <span class="month-nav-title" id="monthTitle"></span>
+      <button class="month-nav-btn" id="nextMonth" title="Следующий месяц" aria-label="Следующий месяц">›</button>
+    </div>
+    <div class="calendar" id="calendar"></div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'trader-diary-data';
+
+    function getMonthName(month) {
+      const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+        'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+      return months[month];
+    }
+
+    function formatDateKey(date) {
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    }
+
+    function getData() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      } catch {
+        return {};
+      }
+    }
+
+    function saveData(data) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function getPrevDayKey(date) {
+      const prev = new Date(date);
+      prev.setDate(prev.getDate() - 1);
+      return formatDateKey(prev);
+    }
+
+    function getNextDayKey(key) {
+      const d = new Date(key);
+      d.setDate(d.getDate() + 1);
+      return formatDateKey(d);
+    }
+
+    let currentYear, currentMonth;
+
+    function getWeekKey(date) {
+      const d = new Date(date);
+      const mondayOffset = (d.getDay() + 6) % 7;
+      d.setDate(d.getDate() - mondayOffset);
+      return formatDateKey(d);
+    }
+
+    function calcMonthTotals(year, month) {
+      const startDate = new Date(year, month, 1);
+      const endDate = new Date(year, month + 1, 0);
+      const data = getData();
+      const firstKey = formatDateKey(startDate);
+      const lastKey = formatDateKey(endDate);
+
+      let startDeposit = 0, netProfit = 0, commission = 0, cashback = 0, endDeposit = 0;
+
+      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        const key = formatDateKey(d);
+        const dayData = data[key] || {};
+        const sd = parseFloat(dayData.startDeposit) || 0;
+        const np = parseFloat(dayData.netProfit) || 0;
+        const comm = parseFloat(dayData.commission) || 0;
+        const cb = parseFloat(dayData.cashback) || comm * 0.35;
+        const ed = parseFloat(dayData.endDeposit) || 0;
+        if (key === firstKey) startDeposit = sd;
+        if (key === lastKey) endDeposit = ed;
+        netProfit += np;
+        commission += comm;
+        cashback += cb;
+      }
+      if (endDeposit === 0) endDeposit = startDeposit + netProfit + cashback;
+      const percent = startDeposit !== 0 ? ((netProfit / startDeposit) * 100).toFixed(2) + '%' : '—';
+      return { startDeposit, netProfit, commission, cashback, endDeposit, percent };
+    }
+
+    function updateProfitChart() {
+      const startDate = new Date(currentYear, currentMonth, 1);
+      const endDate = new Date(currentYear, currentMonth + 1, 0);
+      const data = getData();
+      const values = [];
+      let cumulative = 0;
+      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        const key = formatDateKey(d);
+        const dayData = data[key] || {};
+        const np = parseFloat(dayData.netProfit) || 0;
+        const comm = parseFloat(dayData.commission) || 0;
+        const cb = parseFloat(dayData.cashback) || comm * 0.35;
+        const effectiveResult = np - comm + cb;
+        cumulative += effectiveResult;
+        values.push({ day: d.getDate(), profit: cumulative });
+      }
+
+      const svg = document.getElementById('profitChart');
+      if (!svg) return;
+
+      const profits = values.map(v => v.profit);
+      const minP = values.length ? Math.min(0, ...profits) : 0;
+      const maxP = values.length ? Math.max(0, ...profits, 1) : 1;
+      const range = maxP - minP || 1;
+
+      const padding = { top: 12, right: 12, bottom: 28, left: 42 };
+      const w = 260, h = 140;
+      const chartW = w - padding.left - padding.right;
+      const chartH = h - padding.top - padding.bottom;
+
+      const toX = (i) => padding.left + (values.length > 1 ? (i / (values.length - 1)) * chartW : 0);
+      const toY = (p) => padding.top + chartH - ((p - minP) / range) * chartH;
+
+      let linePath = '', areaPath = '', zeroY = padding.top + chartH / 2;
+      if (values.length) {
+        const pts = values.map((v, i) => ({ x: toX(i), y: toY(v.profit) }));
+        linePath = pts.map((p, i) => (i ? `L ${p.x} ${p.y}` : `M ${p.x} ${p.y}`)).join(' ');
+        zeroY = toY(0);
+        areaPath = `${linePath} L ${pts[pts.length-1].x} ${zeroY} L ${pts[0].x} ${zeroY} Z`;
+      }
+      const lineColor = values.length && values[values.length - 1].profit >= 0 ? '#3fb950' : '#f85149';
+
+      const gridLinesY = [];
+      for (let i = 1; i <= 4; i++) {
+        const y = padding.top + (chartH / 5) * i;
+        gridLinesY.push(`<line x1="${padding.left}" y1="${y}" x2="${w-padding.right}" y2="${y}" stroke="#2d3544" stroke-dasharray="2" opacity="0.5"/>`);
+      }
+      const gridLinesX = [];
+      for (let i = 0; i < values.length; i++) {
+        const x = toX(i);
+        gridLinesX.push(`<line x1="${x}" y1="${padding.top}" x2="${x}" y2="${h - padding.bottom}" stroke="#2d3544" stroke-dasharray="2" opacity="0.25"/>`);
+      }
+
+      const yLabels = range > 0 ? [
+        `<text x="${padding.left - 4}" y="${padding.top + 3}" font-size="8" fill="#8b949e" text-anchor="end">${maxP.toFixed(0)}</text>`,
+        `<text x="${padding.left - 4}" y="${zeroY + 3}" font-size="8" fill="#8b949e" text-anchor="end">0</text>`,
+        `<text x="${padding.left - 4}" y="${h - padding.bottom + 3}" font-size="8" fill="#8b949e" text-anchor="end">${minP.toFixed(0)}</text>`
+      ].join('') : '';
+
+      const chartHtml = `
+        ${gridLinesY.join('')}
+        ${gridLinesX.join('')}
+        <line x1="${padding.left}" y1="${zeroY}" x2="${w-padding.right}" y2="${zeroY}" stroke="#2d3544" stroke-width="1"/>
+        ${areaPath ? `<path d="${areaPath}" fill="${lineColor}" opacity="0.15"/>` : ''}
+        ${linePath ? `<path d="${linePath}" fill="none" stroke="${lineColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>` : ''}
+        ${values.map((v, i) => {
+          const x = toX(i), y = toY(v.profit);
+          return `<circle cx="${x}" cy="${y}" r="2" fill="${lineColor}" stroke="#0f1117" stroke-width="0.5"/>`;
+        }).join('')}
+        ${yLabels}
+      `;
+      svg.innerHTML = chartHtml;
+      const modalSvg = document.getElementById('profitChartModal');
+      if (modalSvg) modalSvg.innerHTML = chartHtml;
+    }
+
+    function updateDashboard() {
+      const t = calcMonthTotals(currentYear, currentMonth);
+      const fmt = (n) => n.toLocaleString('ru-RU', { minimumFractionDigits: 2 }) + ' $';
+      document.getElementById('dashStartDeposit').textContent = t.startDeposit ? fmt(t.startDeposit) : '—';
+      document.getElementById('dashNetProfit').textContent = t.startDeposit || t.netProfit ? (t.netProfit >= 0 ? '+' : '') + fmt(t.netProfit) : '—';
+      document.getElementById('dashCommission').textContent = t.commission ? fmt(t.commission) : '—';
+      document.getElementById('dashCashback').textContent = t.cashback ? fmt(t.cashback) : '—';
+      document.getElementById('dashEndDeposit').textContent = t.endDeposit ? fmt(t.endDeposit) : '—';
+      document.getElementById('dashPercent').textContent = t.percent;
+
+      const npEl = document.getElementById('dashNetProfit');
+      npEl.classList.remove('profit', 'loss');
+      if (t.netProfit > 0) npEl.classList.add('profit');
+      else if (t.netProfit < 0) npEl.classList.add('loss');
+    }
+
+    function buildCalendar(year, month) {
+      currentYear = year;
+      currentMonth = month;
+      const startDate = new Date(year, month, 1);
+      const endDate = new Date(year, month + 1, 0);
+      const data = getData();
+
+      document.getElementById('monthTitle').textContent = `${getMonthName(month)} ${year}`;
+      updateDashboard();
+      updateProfitChart();
+
+      const calendar = document.getElementById('calendar');
+      calendar.innerHTML = '';
+
+      const monthContainer = document.createElement('div');
+      const weeks = {};
+
+      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        const date = new Date(d);
+        const key = formatDateKey(date);
+        const weekKey = getWeekKey(date);
+        if (!weeks[weekKey]) weeks[weekKey] = [];
+        weeks[weekKey].push({ date, key, dayData: data[key] || {} });
+      }
+
+      const sortedWeekKeys = Object.keys(weeks).sort();
+      for (const weekKey of sortedWeekKeys) {
+        const daysInWeek = weeks[weekKey];
+        const daysInCurrentMonth = daysInWeek.filter(d => d.date.getMonth() === currentMonth && d.date.getFullYear() === currentYear);
+        for (const { date, key, dayData } of daysInWeek) {
+          const strip = createDayStrip(date, key, dayData, data);
+          monthContainer.appendChild(strip);
+        }
+        const weekSummary = createWeekSummaryStrip(daysInCurrentMonth.length > 0 ? daysInCurrentMonth : daysInWeek, data);
+        monthContainer.appendChild(weekSummary);
+      }
+      calendar.appendChild(monthContainer);
+    }
+
+    function calcWeekTotals(daysInWeek) {
+      const firstDay = daysInWeek[0];
+      const lastDay = daysInWeek[daysInWeek.length - 1];
+      let startDeposit = 0, netProfit = 0, commission = 0, cashback = 0, endDeposit = 0;
+      for (const { key, dayData } of daysInWeek) {
+        const sd = parseFloat(dayData.startDeposit) || 0;
+        const np = parseFloat(dayData.netProfit) || 0;
+        const comm = parseFloat(dayData.commission) || 0;
+        const cb = parseFloat(dayData.cashback) || comm * 0.35;
+        const ed = parseFloat(dayData.endDeposit) || 0;
+        if (key === firstDay.key) startDeposit = sd;
+        if (key === lastDay.key) endDeposit = ed;
+        netProfit += np;
+        commission += comm;
+        cashback += cb;
+      }
+      const effectiveResult = netProfit - commission + cashback;
+      if (endDeposit === 0 && daysInWeek.length > 0) endDeposit = startDeposit + effectiveResult;
+      return { startDeposit, netProfit, commission, cashback, endDeposit, effectiveResult };
+    }
+
+    function createWeekSummaryStrip(daysInWeek, allData) {
+      const firstDay = daysInWeek[0];
+      const lastDay = daysInWeek[daysInWeek.length - 1];
+      const weekKey = getWeekKey(firstDay.date);
+
+      const totals = calcWeekTotals(daysInWeek);
+      const { startDeposit, netProfit, commission, cashback, endDeposit, effectiveResult } = totals;
+      const percent = startDeposit !== 0 ? ((effectiveResult / startDeposit) * 100).toFixed(2) + '%' : '';
+      const hasData = daysInWeek.some(d => (d.dayData.netProfit ?? '') !== '');
+      let statusClass = 'empty';
+      if (hasData) statusClass = effectiveResult > 0 ? 'profit' : 'loss';
+      const sign = effectiveResult >= 0 ? '+' : '';
+      const summaryText = hasData ? `${sign}${effectiveResult.toLocaleString('ru-RU', { minimumFractionDigits: 2 })}$` : '—';
+
+      const strip = document.createElement('div');
+      strip.className = `week-summary-strip day-strip ${statusClass}`;
+      strip.dataset.weekKey = weekKey;
+      strip.dataset.weekDays = daysInWeek.map(d => d.key).join(',');
+
+      strip.innerHTML = `
+        <div class="day-header">
+          <span class="day-date">Итог недели</span>
+          <span class="day-summary ${statusClass}">${summaryText}</span>
+          <span class="day-toggle">▼</span>
+        </div>
+        <div class="day-content">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Депозит на начало недели</label>
+              <div class="input-currency">
+                <input type="text" value="${startDeposit.toFixed(2)}" readonly>
+                <span class="currency-suffix">$</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Чистая прибыль</label>
+              <div class="input-currency">
+                <input type="text" value="${netProfit >= 0 ? '+' : ''}${netProfit.toFixed(2)}" readonly>
+                <span class="currency-suffix">$</span>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Комиссия</label>
+              <div class="input-currency">
+                <input type="text" value="${commission.toFixed(2)}" readonly>
+                <span class="currency-suffix">$</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>CashBack</label>
+              <div class="input-currency">
+                <input type="text" value="${cashback.toFixed(2)}" readonly>
+                <span class="currency-suffix">$</span>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Депозит на конец недели</label>
+              <div class="input-currency">
+                <input type="text" value="${endDeposit.toFixed(2)}" readonly>
+                <span class="currency-suffix">$</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Процент</label>
+              <input type="text" value="${percent}" readonly>
+            </div>
+          </div>
+        </div>
+      `;
+
+      strip.querySelector('.day-header').addEventListener('click', () => {
+        strip.classList.toggle('expanded');
+      });
+
+      return strip;
+    }
+
+    function createDayStrip(date, key, dayData, allData) {
+      const netProfit = dayData.netProfit !== undefined && dayData.netProfit !== '' 
+        ? parseFloat(dayData.netProfit) : null;
+      const commission = parseFloat(dayData.commission) || 0;
+      const cashback = parseFloat(dayData.cashback) || commission * 0.35;
+      const effectiveResult = netProfit !== null ? netProfit - commission + cashback : null;
+      const isFilled = dayData.netProfit !== undefined && dayData.netProfit !== '';
+      let statusClass = 'empty';
+      if (isFilled && effectiveResult !== null) {
+        statusClass = effectiveResult > 0 ? 'profit' : 'loss';
+      }
+
+      const today = new Date();
+      const isToday = date.getDate() === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
+      const strip = document.createElement('div');
+      strip.className = `day-strip ${statusClass}${isToday ? ' today' : ''}`;
+      strip.dataset.key = key;
+
+      const dayName = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'][date.getDay()];
+      let summaryText = '';
+      if (isFilled && effectiveResult !== null) {
+        const sign = effectiveResult >= 0 ? '+' : '';
+        summaryText = `${sign}${effectiveResult.toLocaleString('ru-RU', { minimumFractionDigits: 2 })}$`;
+      } else {
+        summaryText = 'Нет сделок';
+      }
+
+      strip.innerHTML = `
+        <div class="day-header">
+          <span class="day-date">${date.getDate()} ${getMonthName(date.getMonth()).toLowerCase()} (${dayName})</span>
+          <span class="day-summary ${statusClass}">${summaryText}</span>
+          <span class="day-toggle">▼</span>
+        </div>
+        <div class="day-content">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Депозит на начало дня</label>
+              <div class="input-currency">
+                <input type="number" step="0.01" data-field="startDeposit" placeholder="Из прошлого дня" readonly>
+                <span class="currency-suffix">$</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Чистая прибыль</label>
+              <div class="input-currency">
+                <input type="number" step="0.01" data-field="netProfit" placeholder="Введите вручную">
+                <span class="currency-suffix">$</span>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Комиссия</label>
+              <div class="input-currency">
+                <input type="number" step="0.01" data-field="commission" placeholder="Введите вручную">
+                <span class="currency-suffix">$</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>CashBack (35% от комиссии)</label>
+              <div class="input-currency">
+                <input type="number" step="0.01" data-field="cashback" readonly>
+                <span class="currency-suffix">$</span>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Депозит на конец дня</label>
+              <div class="input-currency">
+                <input type="number" step="0.01" data-field="endDeposit" readonly>
+                <span class="currency-suffix">$</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Процент</label>
+              <input type="text" data-field="percent" readonly placeholder="%">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Комментарий</label>
+            <textarea data-field="comment" placeholder="Введите комментарий"></textarea>
+          </div>
+        </div>
+      `;
+
+      const header = strip.querySelector('.day-header');
+
+      header.addEventListener('click', () => {
+        strip.classList.toggle('expanded');
+      });
+
+      const prevKey = getPrevDayKey(date);
+      const prevData = allData[prevKey] || {};
+      const hasPrevDayData = prevData.endDeposit !== undefined && prevData.endDeposit !== '';
+      const startDeposit = hasPrevDayData
+        ? prevData.endDeposit
+        : (dayData.startDeposit !== undefined ? dayData.startDeposit : '');
+
+      const startDepositInput = strip.querySelector('[data-field="startDeposit"]');
+      if (!hasPrevDayData) startDepositInput.removeAttribute('readonly');
+      const netProfitInput = strip.querySelector('[data-field="netProfit"]');
+      const commissionInput = strip.querySelector('[data-field="commission"]');
+      const cashbackInput = strip.querySelector('[data-field="cashback"]');
+      const endDepositInput = strip.querySelector('[data-field="endDeposit"]');
+      const percentInput = strip.querySelector('[data-field="percent"]');
+      const commentInput = strip.querySelector('[data-field="comment"]');
+
+      startDepositInput.value = startDeposit;
+      netProfitInput.value = dayData.netProfit ?? '';
+      commissionInput.value = dayData.commission ?? '';
+      cashbackInput.value = dayData.cashback ?? '';
+      endDepositInput.value = dayData.endDeposit ?? '';
+      percentInput.value = dayData.percent ?? '';
+      commentInput.value = dayData.comment ?? '';
+
+      function getDayValues(el) {
+        const vals = {};
+        el.querySelectorAll('[data-field]').forEach(inp => {
+          if (inp.dataset.field && inp.tagName !== 'DIV') {
+            vals[inp.dataset.field] = inp.value ?? '';
+          }
+        });
+        return vals;
+      }
+
+      function recalc() {
+        const start = parseFloat(startDepositInput.value) || 0;
+        const netProfit = parseFloat(netProfitInput.value) || 0;
+        const commission = parseFloat(commissionInput.value) || 0;
+
+        const cashback = commission * 0.35;
+        const endDeposit = start + netProfit + cashback;
+        const percent = start !== 0 ? ((netProfit / start) * 100).toFixed(2) + '%' : '';
+
+        cashbackInput.value = cashback.toFixed(2);
+        endDepositInput.value = endDeposit.toFixed(2);
+        percentInput.value = percent;
+
+        const vals = getDayValues(strip);
+        vals.cashback = cashbackInput.value;
+        vals.endDeposit = endDepositInput.value;
+        vals.percent = percent;
+        saveDay(key, vals);
+        updateStripStyle(strip, key);
+        updateSummary(strip);
+      }
+
+      function updateSummary(el) {
+        const summary = el.querySelector('.day-summary');
+        const np = parseFloat(netProfitInput.value) || 0;
+        const comm = parseFloat(commissionInput.value) || 0;
+        const cb = parseFloat(cashbackInput.value) || comm * 0.35;
+        const effectiveResult = np - comm + cb;
+        if (netProfitInput.value !== '' && netProfitInput.value !== undefined) {
+          const sign = effectiveResult >= 0 ? '+' : '';
+          summary.textContent = `${sign}${effectiveResult.toLocaleString('ru-RU', { minimumFractionDigits: 2 })}$`;
+        } else {
+          summary.textContent = 'Нет сделок';
+        }
+        const status = getStripStatus(el);
+        summary.className = `day-summary ${status}`;
+      }
+
+      function getStripStatus(el) {
+        const np = parseFloat(el.querySelector('[data-field="netProfit"]').value) || 0;
+        const comm = parseFloat(el.querySelector('[data-field="commission"]').value) || 0;
+        const cbInput = el.querySelector('[data-field="cashback"]');
+        const cb = parseFloat(cbInput?.value) || comm * 0.35;
+        const effectiveResult = np - comm + cb;
+        const npInput = el.querySelector('[data-field="netProfit"]');
+        if (npInput.value === '' || npInput.value === undefined) return 'empty';
+        return effectiveResult > 0 ? 'profit' : 'loss';
+      }
+
+      netProfitInput.addEventListener('input', () => {
+        recalc();
+      });
+      commissionInput.addEventListener('input', () => {
+        recalc();
+      });
+      startDepositInput.addEventListener('input', recalc);
+      startDepositInput.addEventListener('blur', () => saveDay(key, getDayValues(strip)));
+      commentInput.addEventListener('blur', () => {
+        saveDay(key, getDayValues(strip));
+      });
+
+      recalc();
+
+      return strip;
+    }
+
+    function updateStripStyle(strip, key) {
+      const status = getStripStatus(strip);
+      strip.classList.remove('profit', 'loss', 'empty');
+      strip.classList.add(status);
+    }
+
+    function getStripStatus(strip) {
+      const npInput = strip.querySelector('[data-field="netProfit"]');
+      if (!npInput) return 'empty';
+      if (npInput.value === '' || npInput.value === undefined) return 'empty';
+      const np = parseFloat(npInput.value) || 0;
+      const comm = parseFloat(strip.querySelector('[data-field="commission"]')?.value) || 0;
+      const cbInput = strip.querySelector('[data-field="cashback"]');
+      const cb = parseFloat(cbInput?.value) || comm * 0.35;
+      const effectiveResult = np - comm + cb;
+      return effectiveResult > 0 ? 'profit' : 'loss';
+    }
+
+    function updateWeekSummary(weekKey) {
+      const strip = document.querySelector(`.week-summary-strip[data-week-key="${weekKey}"]`);
+      if (!strip) return;
+      const monday = new Date(weekKey);
+      const daysInWeek = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+          daysInWeek.push({ date: d, key: formatDateKey(d), dayData: getData()[formatDateKey(d)] || {} });
+        }
+      }
+      if (daysInWeek.length === 0) return;
+      const totals = calcWeekTotals(daysInWeek);
+      const { startDeposit, netProfit, commission, cashback, endDeposit, effectiveResult } = totals;
+      const percent = startDeposit !== 0 ? ((effectiveResult / startDeposit) * 100).toFixed(2) + '%' : '';
+      const hasData = daysInWeek.some(d => (d.dayData.netProfit ?? '') !== '');
+      let statusClass = 'empty';
+      if (hasData) statusClass = effectiveResult > 0 ? 'profit' : 'loss';
+      const sign = effectiveResult >= 0 ? '+' : '';
+      const summaryText = hasData ? `${sign}${effectiveResult.toLocaleString('ru-RU', { minimumFractionDigits: 2 })}$` : '—';
+      strip.classList.remove('profit', 'loss', 'empty');
+      strip.classList.add(statusClass);
+      const headerSummary = strip.querySelector('.day-summary');
+      if (headerSummary) {
+        headerSummary.textContent = summaryText;
+        headerSummary.className = `day-summary ${statusClass}`;
+      }
+      const vals = [startDeposit.toFixed(2), (netProfit >= 0 ? '+' : '') + netProfit.toFixed(2), commission.toFixed(2), cashback.toFixed(2), endDeposit.toFixed(2), percent];
+      strip.querySelectorAll('.day-content input').forEach((inp, i) => { inp.value = vals[i] ?? inp.value; });
+    }
+
+    function saveDay(key, values) {
+      const data = getData();
+      data[key] = { ...data[key], ...values };
+      saveData(data);
+      updateDashboard();
+      updateProfitChart();
+
+      const weekKey = getWeekKey(new Date(key));
+      updateWeekSummary(weekKey);
+
+      const nextKey = getNextDayKey(key);
+      const nextStrip = document.querySelector(`.day-strip[data-key="${nextKey}"]`);
+      if (nextStrip && values.endDeposit !== undefined && values.endDeposit !== '') {
+        const startInput = nextStrip.querySelector('[data-field="startDeposit"]');
+        startInput.value = values.endDeposit;
+        startInput.dispatchEvent(new Event('input'));
+      }
+    }
+
+    const now = new Date();
+    buildCalendar(now.getFullYear(), now.getMonth());
+
+    document.getElementById('prevMonth').addEventListener('click', () => {
+      const d = new Date(currentYear, currentMonth - 1);
+      buildCalendar(d.getFullYear(), d.getMonth());
+    });
+
+    document.getElementById('nextMonth').addEventListener('click', () => {
+      const d = new Date(currentYear, currentMonth + 1);
+      buildCalendar(d.getFullYear(), d.getMonth());
+    });
+
+    document.getElementById('chartFullscreenBtn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.getElementById('chartModal').classList.add('open');
+    });
+
+    document.getElementById('chartModal').addEventListener('click', () => {
+      document.getElementById('chartModal').classList.remove('open');
+    });
+  </script>
+</body>
+</html>

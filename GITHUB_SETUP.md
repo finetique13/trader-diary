@@ -39,10 +39,10 @@ git remote set-url origin git@github.com:finetique13/trader-diary.git
 git push -u origin main
 ```
 
-## 5. GitHub Pages (опционально)
+## 5. GitHub Pages — публикация в прод
 
-Для публикации дневника в интернете:
-1. Repo → Settings → Pages
-2. Source: **Deploy from a branch**
-3. Branch: **main** → папка **/trader-diary** (или root)
-4. Save — сайт будет на `https://finetique13.github.io/trader-diary/`
+1. Repo → **Settings** → **Pages**
+2. **Source:** Deploy from a branch
+3. **Branch:** main → папка **/ (root)**
+4. **Save**
+5. Через 1–2 минуты сайт будет доступен: **https://finetique13.github.io/trader-diary/**
